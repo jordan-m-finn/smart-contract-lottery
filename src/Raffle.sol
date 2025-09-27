@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {VRFConsumerBaseV2Plus} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 /**
  * @title A sample raffle contract
@@ -29,7 +29,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     uint256 private immutable I_INTERVAL;
     uint256 private immutable I_SUBSCRIPTION_ID;
     bytes32 private immutable I_KEY_HASH;
-    uint32 private immutable I_NUM_WORDS = 1;
+    uint32 private immutable I_NUM_WORDS;
     uint32 private immutable I_CALLBACK_GAS_LIMIT;
     RaffleState private s_raffleState;
 
@@ -59,7 +59,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         I_CALLBACK_GAS_LIMIT = callbackGasLimit;
         I_NUM_WORDS = numWords;
         s_lastTimeStamp = block.timestamp;
-        s_raffleState = RaffleState.OPEN;
+        s_raffleState = RaffleState.OPEN; // Should start as open
     }
 
     function enterRaffle() external payable {
@@ -156,5 +156,13 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // Getter functions
     function getEntranceFee() public view returns (uint256) {
         return I_ENTRANCE_FEE;
+    }
+
+    function getRaffleState() external view returns (RaffleState) {
+        return s_raffleState;
+    }
+
+    function getPlayer(uint256 indexOfPlayer) external view returns (address) {
+        return s_players[indexOfPlayer];
     }
 }
