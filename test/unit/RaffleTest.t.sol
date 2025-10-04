@@ -5,6 +5,7 @@ import {Test} from "../../lib/forge-std/src/Test.sol";
 import {Raffle} from "../../src/Raffle.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
+import {Vm} from "../../lib/forge-std/src/Vm.sol";
 
 contract RaffleTest is Test {
     Raffle public raffle;
@@ -22,7 +23,7 @@ contract RaffleTest is Test {
 
     event RaffleEntered(address indexed player);
     event WinnerPicked(address indexed winner);
-
+    
     function setUp() public {
         DeployRaffle deployer = new DeployRaffle();
         (raffle, helperConfig) = deployer.deployContract();
@@ -127,5 +128,24 @@ contract RaffleTest is Test {
             abi.encodeWithSelector(Raffle.Raffle__UpkeepNotNeeded.selector, currentBalance, numPlayers, rState)
         );
         raffle.performUpkeep("");
+    }
+
+    modifier raffleEntered() {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        _;
+    }
+
+    function testPerformUpkeepUpdatesRaffleStateAndEmitsRequestId() public raffleEntered {
+        vm.recordLogs();
+        raffle.performUpkeep("");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+
+        Raffle.RaffleState raffleState = raffle.getRaffleState();
+        assert(uint256(requestId) > 0);
+        assert(uint256(raffleState) == 1);
     }
 }
